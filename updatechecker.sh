@@ -57,3 +57,6 @@ for flag in "${flags[@]}"; do
 
     echo ""  # Add a newline for better readability between operations
 done
+
+sleep 2
+pkill konsole
