@@ -1,28 +1,5 @@
 #!/bin/bash
 
-# Get the script name (basename)
-script_name=$(basename "$0")
-
-# Check if the script has execute permission for the user
-if [ ! -x "$0" ]; then
-  echo "You do not have execute permissions for this script."
-  echo "Granting execute permission..."
-
-  # Grant execute permission to the script
-  chmod u+x "$0"
-
-  # Check again if permission was granted
-  if [ ! -x "$0" ]; then
-    echo "Failed to grant execute permission. Exiting..."
-    exit 1
-  fi
-fi
-
-echo "Script is executable, proceeding..."
-
-sleep 2
-
-# Check for available updates
 outdated_packages=$(pacman -Qu)
 
 if [ -z "$outdated_packages" ]; then
