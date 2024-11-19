@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Function to display the menu
+OK="$(tput setaf 2)[OK]$(tput sgr0)"
+ERROR="$(tput setaf 1)[ERROR]$(tput sgr0)"
+NOTE="$(tput setaf 3)[NOTE]$(tput sgr0)"
+WARN="$(tput setaf 5)[WARN]$(tput sgr0)"
+CAT="$(tput setaf 6)[ACTION]$(tput sgr0)"
+ORANGE=$(tput setaf 166)
+YELLOW=$(tput setaf 3)
+RESET=$(tput sgr0)
+
+# Function To Get Ping Host
+HOST="google.com"
+COUNT=5
+INTERVAL=2
+TIMEOUT=10
+
+SCRIPTNAME=$(basename "$0")
+USERNAME=$(whoami)
+
 checkos() {
     local operatingsystem=arch
     for os in "$operatingsystem"; do
@@ -31,6 +50,7 @@ display_loading() {
     echo -ne ${hidecursor}  # Hide cursor
 
     while [ $progress -le $width ]; do
+        clear
         printf "\rLoading: ["
         for ((i=0; i<$progress; i++)); do
             printf "#"
@@ -48,59 +68,154 @@ display_loading() {
     echo -ne ${showcursor}
 }
 
-update() {
-    outdated_packages=$(pacman -Qu)
+# Function to display menu
+show_menu() {
+    echo "==================================================="
+    echo "                   MENU OPTIONS"
+    echo "==================================================="
+    echo "1. Display current date and time"
+    echo "2. List files in current directory"
+    echo "3. Display current working directory"
+    echo "4. Check disk usage"
+    echo "5. Network Speed"
+    echo "6. Update Archlinux"
+    echo "7. Check pings"
+    echo "8. Update The Script"
+    echo "9. Exit"
+    echo "==================================================="
+}
 
-    if [ -z "$outdated_packages" ]; then
-        echo "Your system is up to date."
-    else
-    #Loop through each outdated package and display it
-        echo "There are updates available for the following packages:"
-        for package in $outdated_packages; do
-        echo "$package"
-        done
-    fi
-
-    sleep 2
-
-    # List of pacman flags to update the system
-    flags=("-Sy" "-Syy" "-Syu")
-
-    # Loop through each flag and run the pacman command with that flag
-    for flag in "${flags[@]}"; do
-        echo "Running pacman $flag..."
-        sudo pacman $flag --noconfirm
-
-        # Check if there are any outdated packages after running the command
-        outdated_packages=$(pacman -Qu)
-
-        if [ -z "$outdated_packages" ]; then
-            echo "No updates available."
-        else
-            echo "The following packages are outdated:"
-            echo "$outdated_packages"
-        fi
-
-        echo ""  # Add a newline for better readability between operations
-    done
-
-    for i in {1..3}; do
-        for dots in . .. ...; do
-            clear  # Clears the screen before starting the animation
-            echo -n "Exiting$dots"
-            sleep 0.5  # Adjust this for the speed of the animation
-            if [[ "$dots" == "..." ]]; then
-                sleep 0.5  # Pause for a moment after "Exiting..."
-                clear  # Clear the screen after "Exiting..."
-            fi
-            echo -ne "\r"  # Return the cursor to the beginning of the line
-        done
-        # Optionally reset the line and show a new "Exiting." before the next iteration
-        echo -ne "\rExiting."  # Reset the animation to "Exiting."
-        sleep 0.5  # Pause for a moment before clearing again
+# Reusable Yes/No prompt
+yes_no_prompt() {
+    local prompt="$1"
+    local response
+    while true; do
+        read -p "$prompt (y/n): " response
+        case $response in
+            [Yy]* ) return 0 ;;  # Yes
+            [Nn]* ) return 1 ;;  # No
+            * ) echo "${WARN} Please answer yes(y) or no(n)." ;;
+        esac
     done
 }
 
-display_loading
-checkos
-update
+# Function to check if nethogs is installed
+check_nethogs() {
+    if ! command -v nethogs &> /dev/null; then
+        echo "${ERROR} nethogs is not installed."
+        if yes_no_prompt "Would you like to install it now?"; then
+            echo "${CAT} Installing nethogs..."
+            sudo pacman -S --noconfirm nethogs
+            if [[ $? -eq 0 ]]; then
+                echo "${OK} nethogs installed successfully."
+            else
+                echo "${ERROR} Failed to install nethogs."
+                return 1
+            fi
+        else
+            echo "${NOTE} nethogs installation skipped."
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Function to handle user choice
+handle_choice() {
+    case $1 in
+        1)
+            display_loading
+            echo "$OK Current date and time: $(date)"
+            ;;
+        2)
+            display_loading
+            echo "$OK Files in current directory:"
+            ls -l
+            ;;
+        3)
+            display_loading
+            echo "$OK Current working directory: $(pwd)"
+            ;;
+        4)
+            display_loading
+            echo "$OK Disk usage:"
+            df -h
+            ;;
+        5)
+            display_loading
+            clear
+            echo "$OK Checking network speed..."
+            if check_nethogs; then
+                echo "${CAT} Running nethogs. Use Ctrl+C to exit."
+                sleep 2
+                sudo nethogs
+            else
+                echo "${ERROR} Network speed test canceled."
+            fi
+            ;;
+        6)
+            display_loading
+            echo "$OK Ensuring pacman database is up-to-date..."
+            if yes_no_prompt "$OK Proceed with updating ArchLinux packages?"; then
+                sudo pacman -Sy
+                if [[ $? -eq 0 ]]; then
+                    echo "$OK Updating ArchLinux packages..."
+                    sudo pacman -Syu --noconfirm
+                    if [[ $? -eq 0 ]]; then
+                        echo "$OK ArchLinux is up-to-date."
+                    else
+                        echo "$ERROR Failed to update packages."
+                    fi
+                else
+                    echo "$ERROR Failed to synchronize pacman database."
+                fi
+            else
+                echo "${NOTE} Update skipped."
+            fi
+            sleep 3
+            clear
+            ;;
+        7)
+            display_loading
+            clear
+            sleep 2
+            echo "$OK Checking ping to $HOST..."
+            if ping -c $COUNT -i $INTERVAL -w $TIMEOUT $HOST; then
+                printf "$OK Host $HOST is Reachable."
+            else
+                printf "$ERROR Host $HOST is not Reachable."
+            fi
+            sleep 4
+            clear
+            ;;
+        8)
+            clear
+            UPDATE_URL="https://github.com/MrAndiGamesDev/System-Update-Checker-for-arch/edit/main/updatechecker.sh"
+            LOCAL_SCRIPT="$HOME/$USERNAME/downloads/$SCRIPTNAME"
+            if [ -f "$LOCAL_SCRIPT" ]; then
+                LOCAL_TIMESTAMP=$(stat -c "%Y" "$LOCAL_SCRIPT")
+                REMOTE_TIMESTAMP=$(curl -s "$UPDATE_URL" | grep "Last-Modified" | cut -d'"' -f2)
+                if [ "$LOCAL_TIMESTAMP" -lt "$REMOTE_TIMESTAMP" ]; then
+                    curl -o "$LOCAL_SCRIPT" "$UPDATE_URL"
+                    exec "$LOCAL_SCRIPT"
+                fi
+            fi
+            ;;
+        9)
+            echo "$OK Exiting. Goodbye!"
+            sleep 2
+            exit 0
+            ;;
+        *)
+            echo "${ERROR} Invalid choice. Please try again."
+            ;;
+    esac
+}
+
+# Main script loop
+while true; do
+    show_menu
+    read -p "Enter your choice [1-9]: " choice
+    handle_choice $choice
+    echo ""
+done
