@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Function to display the menu
+# Function To Display The Menu
 OK="$(tput setaf 2)[OK]$(tput sgr0)"
 ERROR="$(tput setaf 1)[ERROR]$(tput sgr0)"
 NOTE="$(tput setaf 3)[NOTE]$(tput sgr0)"
@@ -16,19 +16,20 @@ COUNT=5
 INTERVAL=2
 TIMEOUT=10
 
+# Function To Get The Script Ma,e
 SCRIPTNAME=$(basename "$0")
-USERNAME=$(whoami)
 
+# Detects Which operating system your using
 checkos() {
     local operatingsystem=arch
     for os in "$operatingsystem"; do
         if [ -f /etc/${os}-release ]; then
-            echo "$os detected!"
+            echo "$OK $os detected!"
             return 0
         else
-            echo "Not running on $os"
+            echo "$ERROR Not running on $os"
             sleep 3
-            echo "Exiting..."
+            echo "$NOTE Exiting..."
             sleep 2
             exit
             return 1
@@ -36,6 +37,7 @@ checkos() {
     done
 }
 
+# Function To Display The Loading Screen
 display_loading() {
     local ishowspeed=0.05
     local duration=1
@@ -80,8 +82,7 @@ show_menu() {
     echo "5. Network Speed"
     echo "6. Update Archlinux"
     echo "7. Check pings"
-    echo "8. Update The Script"
-    echo "9. Exit"
+    echo "8. Exit"
     echo "==================================================="
 }
 
@@ -185,23 +186,10 @@ handle_choice() {
             else
                 printf "$ERROR Host $HOST is not Reachable."
             fi
-            sleep 4
+            sleep 3
             clear
             ;;
         8)
-            clear
-            UPDATE_URL="https://github.com/MrAndiGamesDev/System-Update-Checker-for-arch/edit/main/updatechecker.sh"
-            LOCAL_SCRIPT="$HOME/$USERNAME/downloads/$SCRIPTNAME"
-            if [ -f "$LOCAL_SCRIPT" ]; then
-                LOCAL_TIMESTAMP=$(stat -c "%Y" "$LOCAL_SCRIPT")
-                REMOTE_TIMESTAMP=$(curl -s "$UPDATE_URL" | grep "Last-Modified" | cut -d'"' -f2)
-                if [ "$LOCAL_TIMESTAMP" -lt "$REMOTE_TIMESTAMP" ]; then
-                    curl -o "$LOCAL_SCRIPT" "$UPDATE_URL"
-                    exec "$LOCAL_SCRIPT"
-                fi
-            fi
-            ;;
-        9)
             echo "$OK Exiting. Goodbye!"
             sleep 2
             exit 0
@@ -214,8 +202,9 @@ handle_choice() {
 
 # Main script loop
 while true; do
+    checkos
     show_menu
-    read -p "Enter your choice [1-9]: " choice
+    read -p "Enter your choice [1-8]: " choice
     handle_choice $choice
     echo ""
 done
