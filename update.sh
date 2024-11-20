@@ -23,11 +23,14 @@ SCRIPTNAME=$(basename "$0")
 checkos() {
     local operatingsystem=arch
     if [ -f /etc/${operatingsystem}-release ]; then
-        echo "$OK $operatingsystem detected!"
+        echo "$OK $operatingsystem was detected!"
+        sleep 2
         return 0
     else
         echo "$ERROR Not running on $operatingsystem"
+        sleep 2
         echo "$NOTE Exiting..."
+        sleep 2
         return 1
     fi
 }
@@ -70,13 +73,13 @@ show_menu() {
     echo "==================================================="
     echo "                   MENU OPTIONS"
     echo "==================================================="
-    echo "1. Display current date and time"
-    echo "2. List files in current directory"
-    echo "3. Display current working directory"
-    echo "4. Check disk usage"
+    echo "1. Display Current date and time"
+    echo "2. List Files in current directory"
+    echo "3. Display Current working directory"
+    echo "4. Check Disk usage"
     echo "5. Network Speed"
     echo "6. Update Archlinux"
-    echo "7. Check pings"
+    echo "7. Check Pings"
     echo "8. Exit"
     echo "==================================================="
 }
