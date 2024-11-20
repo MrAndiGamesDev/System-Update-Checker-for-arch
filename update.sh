@@ -19,23 +19,23 @@ TIMEOUT=10
 # Function To Get The Script Name
 SCRIPTNAME=$(basename "$0")
 
-# Detects Which operating system your using
+# Detects Which operating system you're using
 checkos() {
     local operatingsystem=arch
     if [ -f /etc/${operatingsystem}-release ]; then
-        echo "$OK $operatingsystem was detected!"
+        animate_text "$OK $operatingsystem was detected!"
         sleep 2
         return 0
     else
-        echo "$ERROR Not running on $operatingsystem"
+        animate_text "$ERROR Not running on $operatingsystem"
         sleep 2
-        echo "$NOTE Exiting..."
+        animate_text "$NOTE Exiting..."
         sleep 2
         return 1
     fi
 }
 
-# Function To Display The Loading Screen
+# Function to Display the Loading Screen
 display_loading() {
     local ishowspeed=0.05
     local duration=1
@@ -68,20 +68,31 @@ display_loading() {
     echo -ne ${showcursor}
 }
 
+# Function to animate text output
+animate_text() {
+    local text="$1"
+    local delay=0.05
+    for ((i = 0; i < ${#text}; i++)); do
+        echo -n "${text:$i:1}"
+        sleep $delay
+    done
+    echo
+}
+
 # Function to display menu
 show_menu() {
-    echo "==================================================="
-    echo "                   MENU OPTIONS"
-    echo "==================================================="
-    echo "1. Display Current date and time"
-    echo "2. List Files in current directory"
-    echo "3. Display Current working directory"
-    echo "4. Check Disk usage"
-    echo "5. Network Speed"
-    echo "6. Update Archlinux"
-    echo "7. Check Pings"
-    echo "8. Exit"
-    echo "==================================================="
+    animate_text "==================================================="
+    animate_text "                   MENU OPTIONS"
+    animate_text "==================================================="
+    animate_text "1. Display Current date and time"
+    animate_text "2. List Files in current directory"
+    animate_text "3. Display Current working directory"
+    animate_text "4. Check Disk usage"
+    animate_text "5. Network Speed"
+    animate_text "6. Update Archlinux"
+    animate_text "7. Check Pings"
+    animate_text "8. Exit"
+    animate_text "==================================================="
 }
 
 # Reusable Yes/No prompt
@@ -101,18 +112,18 @@ yes_no_prompt() {
 # Function to check if nethogs is installed
 check_nethogs() {
     if ! command -v nethogs &> /dev/null; then
-        echo "${ERROR} nethogs is not installed."
+        animate_text "${ERROR} nethogs is not installed."
         if yes_no_prompt "Would you like to install it now?"; then
-            echo "${CAT} Installing nethogs..."
+            animate_text "${CAT} Installing nethogs..."
             sudo pacman -S --noconfirm nethogs
             if [[ $? -eq 0 ]]; then
-                echo "${OK} nethogs installed successfully."
+                animate_text "${OK} nethogs installed successfully."
             else
-                echo "${ERROR} Failed to install nethogs."
+                animate_text "${ERROR} Failed to install nethogs."
                 return 1
             fi
         else
-            echo "${NOTE} nethogs installation skipped."
+            animate_text "${NOTE} nethogs installation skipped."
             return 1
         fi
     fi
@@ -124,52 +135,52 @@ handle_choice() {
     case $1 in
         1)
             display_loading
-            echo "$OK Current date and time: $(date)"
+            animate_text "$OK Current date and time: $(date)"
             ;;
         2)
             display_loading
-            echo "$OK Files in current directory:"
+            animate_text "$OK Files in current directory:"
             ls -l
             ;;
         3)
             display_loading
-            echo "$OK Current working directory: $(pwd)"
+            animate_text "$OK Current working directory: $(pwd)"
             ;;
         4)
             display_loading
-            echo "$OK Disk usage:"
+            animate_text "$OK Disk usage:"
             df -h
             ;;
         5)
             display_loading
             clear
-            echo "$OK Checking network speed..."
+            animate_text "$OK Checking network speed..."
             if check_nethogs; then
-                echo "${CAT} Running nethogs. Use Ctrl+C to exit."
+                animate_text "${CAT} Running nethogs. Use Ctrl+C to exit."
                 sleep 2
                 sudo nethogs
             else
-                echo "${ERROR} Network speed test canceled."
+                animate_text "${ERROR} Network speed test canceled."
             fi
             ;;
         6)
             display_loading
-            echo "$OK Ensuring pacman database is up-to-date..."
+            animate_text "$OK Ensuring pacman database is up-to-date..."
             if yes_no_prompt "$OK Proceed with updating ArchLinux packages?"; then
                 sudo pacman -Sy
                 if [[ $? -eq 0 ]]; then
-                    echo "$OK Updating ArchLinux packages..."
+                    animate_text "$OK Updating ArchLinux packages..."
                     sudo pacman -Syu --noconfirm
                     if [[ $? -eq 0 ]]; then
-                        echo "$OK ArchLinux is up-to-date."
+                        animate_text "$OK ArchLinux is up-to-date."
                     else
-                        echo "$ERROR Failed to update packages."
+                        animate_text "$ERROR Failed to update packages."
                     fi
                 else
-                    echo "$ERROR Failed to synchronize pacman database."
+                    animate_text "$ERROR Failed to synchronize pacman database."
                 fi
             else
-                echo "${NOTE} Update skipped."
+                animate_text "${NOTE} Update skipped."
             fi
             sleep 3
             clear
@@ -178,22 +189,22 @@ handle_choice() {
             display_loading
             clear
             sleep 2
-            echo "$OK Checking ping to $HOST..."
+            animate_text "$OK Checking ping to $HOST..."
             if ping -c $COUNT -i $INTERVAL -w $TIMEOUT $HOST; then
-                printf "$OK Host $HOST is Reachable."
+                animate_text "$OK Host $HOST is Reachable."
             else
-                printf "$ERROR Host $HOST is not Reachable."
+                animate_text "$ERROR Host $HOST is not Reachable."
             fi
             sleep 3
             clear
             ;;
         8)
-            echo "$OK Exiting. Goodbye!"
+            animate_text "$OK Exiting. Goodbye!"
             sleep 2
             exit 0
             ;;
         *)
-            echo "${ERROR} Invalid choice. Please try again."
+            animate_text "${ERROR} Invalid choice. Please try again."
             ;;
     esac
 }
