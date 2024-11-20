@@ -16,25 +16,20 @@ COUNT=5
 INTERVAL=2
 TIMEOUT=10
 
-# Function To Get The Script Ma,e
+# Function To Get The Script Name
 SCRIPTNAME=$(basename "$0")
 
 # Detects Which operating system your using
 checkos() {
     local operatingsystem=arch
-    for os in "$operatingsystem"; do
-        if [ -f /etc/${os}-release ]; then
-            echo "$OK $os detected!"
-            return 0
-        else
-            echo "$ERROR Not running on $os"
-            sleep 3
-            echo "$NOTE Exiting..."
-            sleep 2
-            exit
-            return 1
-        fi
-    done
+    if [ -f /etc/${operatingsystem}-release ]; then
+        echo "$OK $operatingsystem detected!"
+        return 0
+    else
+        echo "$ERROR Not running on $operatingsystem"
+        echo "$NOTE Exiting..."
+        return 1
+    fi
 }
 
 # Function To Display The Loading Screen
@@ -200,11 +195,18 @@ handle_choice() {
     esac
 }
 
-# Main script loop
-while true; do
-    checkos
-    show_menu
-    read -p "Enter your choice [1-8]: " choice
-    handle_choice $choice
-    echo ""
-done
+iusearchbtw() {
+    # Main script loop
+    while true; do
+        checkos
+        if [[ $? -ne 0 ]]; then
+            break
+        fi
+        show_menu
+        read -p "Enter your choice [1-8]: " choice
+        handle_choice $choice
+        echo ""
+    done
+}
+
+iusearchbtw
